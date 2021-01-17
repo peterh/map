@@ -98,7 +98,7 @@ func (m *MapData) rectangle() {
 	lefttrim := maxlen
 	for _, l := range m.line {
 		pos := strings.IndexFunc(l, func(r rune) bool { return !unicode.IsSpace(r) })
-		if pos > 0 {
+		if pos >= 0 {
 			if pos < lefttrim {
 				lefttrim = pos
 			}
