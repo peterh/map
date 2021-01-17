@@ -6,11 +6,28 @@ import (
 )
 
 type MapData struct {
-	WallSize int
-	TileSize int
-	Output   string
-	line     []string
-	pic      image.Image
+	TileSize            int
+	WallSize            int
+	WallTop, WallBottom uint8   // Greyscale value of the wall
+	Shadow, ShadowDepth uint8   // Shadow is weakest shadow alpha (default is ~20%), strongest shadow is ShadowDepth plus Shadow
+	ShadowWidth         float64 // Falloff (1 means half shadow at one tile away, 2 means half shadow at 2 tiles away, etc)
+	Light               uint8   // wall at LightAngle angle this (max) amplification
+	LightAngle          int16   // in degrees
+	Output              string  // Output filename (must end in .png)
+	line                []string
+	pic                 image.Image
+}
+
+func (m *MapData) defaults() {
+	m.TileSize = 50
+	m.WallSize = 6
+	m.WallTop = 160
+	m.WallBottom = 135
+	m.Shadow = 50
+	m.ShadowDepth = 65
+	m.ShadowWidth = 0.2
+	m.Light = 15
+	m.LightAngle = 10
 }
 
 func (m *MapData) draw() {
@@ -31,12 +48,12 @@ func (m *MapData) draw() {
 				// translucent black
 				for ry := 0; ry < m.TileSize; ry++ {
 					for rx := 0; rx < m.TileSize; rx++ {
-						i.Pix[origin+rx*4+ry*i.Stride+3] = 60
+						i.Pix[origin+rx*4+ry*i.Stride+3] = m.Shadow
 					}
 				}
 			case '\\':
 				// lower-left is solid
-				before := uint8(60)
+				before := m.Shadow
 				after := uint8(255)
 				if m.line[y][x+1] == '#' || m.line[y-1][x] == '#' ||
 					m.line[y][x+1] == '\\' || m.line[y-1][x] == '\\' {
@@ -54,7 +71,7 @@ func (m *MapData) draw() {
 				}
 			case '/':
 				// lower-right is solid
-				before := uint8(60)
+				before := m.Shadow
 				after := uint8(255)
 				if m.line[y][x-1] == '#' || m.line[y-1][x] == '#' ||
 					m.line[y][x-1] == '/' || m.line[y-1][x] == '/' {

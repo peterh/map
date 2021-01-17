@@ -16,6 +16,7 @@ func read(fn string) (*MapData, error) {
 	if err != nil {
 		return nil, err
 	}
+	m.defaults()
 	s := bufio.NewScanner(f)
 	ref := reflect.Indirect(reflect.ValueOf(&m))
 	for s.Scan() {
@@ -45,6 +46,13 @@ func read(fn string) (*MapData, error) {
 					continue
 				}
 				vref.SetInt(i)
+			case reflect.Float32, reflect.Float64:
+				i, err := strconv.ParseFloat(val, 64)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				vref.SetFloat(i)
 			default:
 				fmt.Println("Internal Error! Don't know how to set", val)
 			}
@@ -56,7 +64,6 @@ func read(fn string) (*MapData, error) {
 		return nil, err
 	}
 
-	m.defaults()
 	m.rectangle()
 
 	return &m, nil
@@ -118,13 +125,4 @@ func (m *MapData) rectangle() {
 	blank := strings.Repeat(" ", len(m.line[0]))
 	m.line = append([]string{blank}, m.line...)
 	m.line = append(m.line, blank)
-}
-
-func (m *MapData) defaults() {
-	if m.TileSize == 0 {
-		m.TileSize = 50
-	}
-	if m.WallSize == 0 {
-		m.WallSize = 6
-	}
 }
