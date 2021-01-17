@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"sync"
 )
 
 type MapData struct {
@@ -121,12 +122,19 @@ func (m *MapData) draw() {
 		fromfloor = append(fromfloor, floorrow)
 	}
 	// flood
-	for y := 1; y < len(floor)-1; y++ {
-		for x := 1; x < len(floor[y])-1; x++ {
-			flood(x, y, fromwall)
-			flood(x, y, fromfloor)
+	var floodwait sync.WaitGroup
+	floodwait.Add(2)
+	f := func(what [][]uint8) {
+		for y := 3; y < len(floor)-3; y++ {
+			for x := 3; x < len(floor[y])-3; x++ {
+				flood(x, y, what)
+			}
 		}
+		floodwait.Done()
 	}
+	go f(fromwall)
+	go f(fromfloor)
+	floodwait.Wait()
 
 	const opaque = uint8(255)
 	i := image.NewNRGBA(image.Rect(0, 0, width, height))
@@ -185,26 +193,56 @@ func flood(x int, y int, chart [][]uint8) {
 	this++
 	if chart[y][x-1] > this {
 		chart[y][x-1] = this
-		if x-1 > 0 {
+		if x-3 > 0 {
 			flood(x-1, y, chart)
 		}
 	}
 	if chart[y-1][x] > this {
 		chart[y-1][x] = this
-		if y-1 > 0 {
+		if y-3 > 0 {
 			flood(x, y-1, chart)
 		}
 	}
 	if chart[y+1][x] > this {
 		chart[y+1][x] = this
-		if y+1 < len(chart)-1 {
+		if y+3 < len(chart)-1 {
 			flood(x, y+1, chart)
 		}
 	}
 	if chart[y][x+1] > this {
 		chart[y][x+1] = this
-		if x+1 < len(chart[y])-1 {
+		if x+3 < len(chart[y])-1 {
 			flood(x+1, y, chart)
+		}
+	}
+
+	// Soften diagonals somewhat
+	if this >= 253 {
+		return
+	}
+	this += 2
+	if chart[y-2][x-2] > this {
+		chart[y-2][x-2] = this
+		if x-3 > 0 && y-3 > 0 {
+			flood(x-2, y-2, chart)
+		}
+	}
+	if chart[y-2][x+2] > this {
+		chart[y-2][x+2] = this
+		if x+3 < len(chart[y])-1 && y-3 > 0 {
+			flood(x+2, y-2, chart)
+		}
+	}
+	if chart[y+2][x+2] > this {
+		chart[y+2][x+2] = this
+		if x+3 < len(chart[y])-1 && y+3 < len(chart)-1 {
+			flood(x+2, y+2, chart)
+		}
+	}
+	if chart[y+2][x-2] > this {
+		chart[y+2][x-2] = this
+		if x-3 > 0 && y+3 < len(chart)-1 {
+			flood(x-2, y+2, chart)
 		}
 	}
 }
