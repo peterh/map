@@ -55,9 +55,12 @@ func (m *MapData) draw() {
 				// lower-left is solid
 				before := m.Shadow
 				after := uint8(255)
-				if m.line[y][x+1] == '#' || m.line[y-1][x] == '#' ||
-					m.line[y][x+1] == '\\' || m.line[y-1][x] == '\\' {
-					// upper-right is solid
+				if m.line[y][x+1] == '#' || m.line[y-1][x] == '#' {
+					// strong rule: upper-right is solid
+					before, after = after, before
+				} else if (m.line[y][x+1] != ' ' || m.line[y-1][x] != ' ') &&
+					m.line[y][x-1] != '#' && m.line[y+1][x] != '#' {
+					// weak rule: upper-right is solid if we see upper-right and don't see solid below/left
 					before, after = after, before
 				}
 				for ry := 0; ry < m.TileSize; ry++ {
@@ -73,9 +76,12 @@ func (m *MapData) draw() {
 				// lower-right is solid
 				before := m.Shadow
 				after := uint8(255)
-				if m.line[y][x-1] == '#' || m.line[y-1][x] == '#' ||
-					m.line[y][x-1] == '/' || m.line[y-1][x] == '/' {
-					// upper-left is solid
+				if m.line[y][x-1] == '#' || m.line[y-1][x] == '#' {
+					// strong: upper-left is solid
+					before, after = after, before
+				} else if (m.line[y][x-1] != ' ' || m.line[y-1][x] != ' ') &&
+					m.line[y][x+1] != '#' && m.line[y+1][x] != '#' {
+					// weak: upper-left is solid
 					before, after = after, before
 				}
 				for ry := 0; ry < m.TileSize; ry++ {
