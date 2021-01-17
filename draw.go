@@ -124,7 +124,61 @@ func (m *MapData) draw() {
 							val = before
 						}
 						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
-						angle[y*m.TileSize+dy][x*m.TileSize+dx] = a
+						delta := dx - dy
+						if delta <= 1 && delta >= -1 {
+							angle[y*m.TileSize+dy][x*m.TileSize+dx] = a
+						}
+					}
+				}
+				if before {
+					leftempty := m.line[y][x-1] == ' '
+					rightempty := m.line[y][x+1] == ' '
+					belowempty := m.line[y+1][x] == ' '
+					if leftempty {
+						for dy := 0; dy < m.TileSize; dy++ {
+							angle[y*m.TileSize+dy][x*m.TileSize] = 90
+							angle[y*m.TileSize+dy][x*m.TileSize-1] = 90
+						}
+					}
+					if belowempty {
+						for dx := 0; dx < m.TileSize; dx++ {
+							if angle[(y+1)*m.TileSize-1][x*m.TileSize+dx] == 0 {
+								angle[(y+1)*m.TileSize-1][x*m.TileSize+dx] = 360
+							}
+							angle[(y+1)*m.TileSize][x*m.TileSize+dx] = 360
+						}
+						if !rightempty {
+							angle[(y+1)*m.TileSize-1][(x+1)*m.TileSize-1] = 360
+						}
+						if !leftempty {
+							angle[(y+1)*m.TileSize-1][x*m.TileSize] = 360
+						}
+					}
+				} else {
+					leftempty := m.line[y][x-1] == ' '
+					rightempty := m.line[y][x+1] == ' '
+					aboveempty := m.line[y-1][x] == ' '
+					if rightempty {
+						for dy := 0; dy < m.TileSize; dy++ {
+							if angle[y*m.TileSize+dy][(x+1)*m.TileSize-1] == 0 {
+								angle[y*m.TileSize+dy][(x+1)*m.TileSize-1] = 270
+							}
+							angle[y*m.TileSize+dy][(x+1)*m.TileSize] = 270
+						}
+					}
+					if aboveempty {
+						for dx := 0; dx < m.TileSize; dx++ {
+							if angle[y*m.TileSize][x*m.TileSize+dx] == 0 {
+								angle[y*m.TileSize][x*m.TileSize+dx] = 180
+							}
+							angle[y*m.TileSize-1][x*m.TileSize+dx] = 180
+						}
+						if !rightempty {
+							angle[y*m.TileSize][(x+1)*m.TileSize-1] = 180
+						}
+						if !leftempty {
+							angle[y*m.TileSize][x*m.TileSize] = 180
+						}
 					}
 				}
 			case '/':
@@ -149,7 +203,65 @@ func (m *MapData) draw() {
 							val = before
 						}
 						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
-						angle[y*m.TileSize+dy][x*m.TileSize+dx] = a
+						delta := m.TileSize - dx - 1 - dy
+						if delta <= 1 && delta >= -1 {
+							angle[y*m.TileSize+dy][x*m.TileSize+dx] = a
+						}
+					}
+				}
+				if before {
+					leftempty := m.line[y][x-1] == ' '
+					rightempty := m.line[y][x+1] == ' '
+					belowempty := m.line[y+1][x] == ' '
+					if rightempty {
+						for dy := 0; dy < m.TileSize; dy++ {
+							if angle[y*m.TileSize+dy][(x+1)*m.TileSize-1] == 0 {
+								angle[y*m.TileSize+dy][(x+1)*m.TileSize-1] = 270
+							}
+							angle[y*m.TileSize+dy][(x+1)*m.TileSize] = 270
+						}
+					}
+					if belowempty {
+						for dx := 0; dx < m.TileSize; dx++ {
+							if angle[(y+1)*m.TileSize-1][x*m.TileSize+dx] == 0 {
+								angle[(y+1)*m.TileSize-1][x*m.TileSize+dx] = 360
+							}
+							angle[(y+1)*m.TileSize][x*m.TileSize+dx] = 360
+						}
+						if !rightempty {
+							angle[(y+1)*m.TileSize-1][(x+1)*m.TileSize-1] = 360
+						}
+						if !leftempty {
+							angle[(y+1)*m.TileSize-1][x*m.TileSize] = 360
+						}
+					}
+				} else {
+					leftempty := m.line[y][x-1] == ' '
+					rightempty := m.line[y][x+1] == ' '
+					aboveempty := m.line[y-1][x] == ' '
+					if leftempty {
+						for dy := 0; dy < m.TileSize; dy++ {
+							if angle[y*m.TileSize+dy][x*m.TileSize] == 0 {
+								angle[y*m.TileSize+dy][x*m.TileSize] = 90
+							}
+							if angle[y*m.TileSize+dy][x*m.TileSize-1] == 0 {
+								angle[y*m.TileSize+dy][x*m.TileSize-1] = 90
+							}
+						}
+					}
+					if aboveempty {
+						for dx := 0; dx < m.TileSize; dx++ {
+							if angle[y*m.TileSize][x*m.TileSize+dx] == 0 {
+								angle[y*m.TileSize][x*m.TileSize+dx] = 180
+							}
+							angle[y*m.TileSize-1][x*m.TileSize+dx] = 180
+						}
+						if !rightempty {
+							angle[y*m.TileSize][(x+1)*m.TileSize-1] = 180
+						}
+						if !leftempty {
+							angle[y*m.TileSize][x*m.TileSize] = 180
+						}
 					}
 				}
 			case '>':
