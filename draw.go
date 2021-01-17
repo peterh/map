@@ -25,13 +25,49 @@ func (m *MapData) draw() {
 
 	for y, row := range m.line {
 		origin := y * m.TileSize * i.Stride
-		for _, t := range row {
+		for x, t := range row {
 			switch t {
 			case '#':
 				// translucent black
 				for ry := 0; ry < m.TileSize; ry++ {
 					for rx := 0; rx < m.TileSize; rx++ {
 						i.Pix[origin+rx*4+ry*i.Stride+3] = 60
+					}
+				}
+			case '\\':
+				// lower-left is solid
+				before := uint8(60)
+				after := uint8(255)
+				if m.line[y][x+1] == '#' || m.line[y-1][x] == '#' ||
+					m.line[y][x+1] == '\\' || m.line[y-1][x] == '\\' {
+					// upper-right is solid
+					before, after = after, before
+				}
+				for ry := 0; ry < m.TileSize; ry++ {
+					for rx := 0; rx < m.TileSize; rx++ {
+						val := after
+						if rx <= ry {
+							val = before
+						}
+						i.Pix[origin+rx*4+ry*i.Stride+3] = val
+					}
+				}
+			case '/':
+				// lower-right is solid
+				before := uint8(60)
+				after := uint8(255)
+				if m.line[y][x-1] == '#' || m.line[y-1][x] == '#' ||
+					m.line[y][x-1] == '/' || m.line[y-1][x] == '/' {
+					// upper-left is solid
+					before, after = after, before
+				}
+				for ry := 0; ry < m.TileSize; ry++ {
+					for rx := 0; rx < m.TileSize; rx++ {
+						val := after
+						if m.TileSize-rx-1 <= ry {
+							val = before
+						}
+						i.Pix[origin+rx*4+ry*i.Stride+3] = val
 					}
 				}
 			default:
