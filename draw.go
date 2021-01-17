@@ -95,6 +95,74 @@ func (m *MapData) draw() {
 						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
 					}
 				}
+			case '>':
+				before := true
+				after := false
+				if m.line[y][x+1] == '#' {
+					// right is solid
+					before, after = after, before
+				}
+				for dy := 0; dy < m.TileSize; dy++ {
+					for dx := 0; dx < m.TileSize; dx++ {
+						val := after
+						if dx <= dy &&
+							m.TileSize-dx-1 > dy {
+							val = before
+						}
+						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
+					}
+				}
+			case '<':
+				before := true
+				after := false
+				if m.line[y][x-1] == '#' {
+					// right is solid
+					before, after = after, before
+				}
+				for dy := 0; dy < m.TileSize; dy++ {
+					for dx := 0; dx < m.TileSize; dx++ {
+						val := after
+						if dx > dy &&
+							m.TileSize-dx-1 <= dy {
+							val = before
+						}
+						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
+					}
+				}
+			case 'v':
+				before := true
+				after := false
+				if m.line[y+1][x] == '#' {
+					// right is solid
+					before, after = after, before
+				}
+				for dy := 0; dy < m.TileSize; dy++ {
+					for dx := 0; dx < m.TileSize; dx++ {
+						val := after
+						if dx > dy &&
+							m.TileSize-dx-1 > dy {
+							val = before
+						}
+						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
+					}
+				}
+			case '^':
+				before := true
+				after := false
+				if m.line[y-1][x] == '#' {
+					// above is solid
+					before, after = after, before
+				}
+				for dy := 0; dy < m.TileSize; dy++ {
+					for dx := 0; dx < m.TileSize; dx++ {
+						val := after
+						if dx <= dy &&
+							m.TileSize-dx-1 <= dy {
+							val = before
+						}
+						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
+					}
+				}
 			default:
 				fmt.Printf("unrecognized token %c\n", t)
 			case ' ':
