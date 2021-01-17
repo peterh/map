@@ -37,24 +37,25 @@ func (m *MapData) draw() {
 		width = len(m.line[0]) * m.TileSize
 	}
 
-	i := image.NewNRGBA(image.Rect(0, 0, width, height))
-	m.pic = i
+	floor := make([][]bool, height)
+	for i := range floor {
+		floor[i] = make([]bool, width)
+	}
 
 	for y, row := range m.line {
-		origin := y * m.TileSize * i.Stride
 		for x, t := range row {
 			switch t {
 			case '#':
 				// translucent black
-				for ry := 0; ry < m.TileSize; ry++ {
-					for rx := 0; rx < m.TileSize; rx++ {
-						i.Pix[origin+rx*4+ry*i.Stride+3] = m.Shadow
+				for dy := 0; dy < m.TileSize; dy++ {
+					for dx := 0; dx < m.TileSize; dx++ {
+						floor[y*m.TileSize+dy][x*m.TileSize+dx] = true
 					}
 				}
 			case '\\':
 				// lower-left is solid
-				before := m.Shadow
-				after := uint8(255)
+				before := true
+				after := false
 				if m.line[y][x+1] == '#' || m.line[y-1][x] == '#' {
 					// strong rule: upper-right is solid
 					before, after = after, before
@@ -63,19 +64,19 @@ func (m *MapData) draw() {
 					// weak rule: upper-right is solid if we see upper-right and don't see solid below/left
 					before, after = after, before
 				}
-				for ry := 0; ry < m.TileSize; ry++ {
-					for rx := 0; rx < m.TileSize; rx++ {
+				for dy := 0; dy < m.TileSize; dy++ {
+					for dx := 0; dx < m.TileSize; dx++ {
 						val := after
-						if rx <= ry {
+						if dx <= dy {
 							val = before
 						}
-						i.Pix[origin+rx*4+ry*i.Stride+3] = val
+						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
 					}
 				}
 			case '/':
 				// lower-right is solid
-				before := m.Shadow
-				after := uint8(255)
+				before := true
+				after := false
 				if m.line[y][x-1] == '#' || m.line[y-1][x] == '#' {
 					// strong: upper-left is solid
 					before, after = after, before
@@ -84,27 +85,94 @@ func (m *MapData) draw() {
 					// weak: upper-left is solid
 					before, after = after, before
 				}
-				for ry := 0; ry < m.TileSize; ry++ {
-					for rx := 0; rx < m.TileSize; rx++ {
+				for dy := 0; dy < m.TileSize; dy++ {
+					for dx := 0; dx < m.TileSize; dx++ {
 						val := after
-						if m.TileSize-rx-1 <= ry {
+						if m.TileSize-dx-1 <= dy {
 							val = before
 						}
-						i.Pix[origin+rx*4+ry*i.Stride+3] = val
+						floor[y*m.TileSize+dy][x*m.TileSize+dx] = val
 					}
 				}
 			default:
 				fmt.Printf("unrecognized token %c\n", t)
-				fallthrough
 			case ' ':
-				// opaque black
-				for ry := 0; ry < m.TileSize; ry++ {
-					for rx := 0; rx < m.TileSize; rx++ {
-						i.Pix[origin+rx*4+ry*i.Stride+3] = 255
-					}
-				}
+				// "not floor" is the default setting
 			}
-			origin += m.TileSize * 4
+		}
+	}
+
+	// initialize
+	fromwall := make([][]uint8, 0, len(floor))
+	for _, row := range floor {
+		wallrow := make([]uint8, 0, len(row))
+		for _, f := range row {
+			dist := uint8(0)
+			if f {
+				dist = 255
+			}
+			wallrow = append(wallrow, dist)
+		}
+		fromwall = append(fromwall, wallrow)
+	}
+	// flood
+	for y := 1; y < len(floor)-1; y++ {
+		for x := 1; x < len(floor[y])-1; x++ {
+			flood(x, y, fromwall)
+		}
+	}
+
+	const opaque = uint8(255)
+	i := image.NewNRGBA(image.Rect(0, 0, width, height))
+	m.pic = i
+	offset := 3
+	for y, row := range floor {
+		for x, f := range row {
+			val := opaque
+			if f {
+				val = m.Shadow
+				fw := fromwall[y][x]
+				if fw == 0 {
+					fw = 1
+				}
+				dist := float64(fw-1)/(float64(m.TileSize)*m.ShadowWidth) + 1
+				extra := uint8(float64(m.ShadowDepth) / dist)
+				val += extra
+			}
+			i.Pix[offset] = val
+			offset += 4
+		}
+	}
+}
+
+func flood(x int, y int, chart [][]uint8) {
+	this := chart[y][x]
+	if this >= 254 {
+		return
+	}
+	this++
+	if chart[y][x-1] > this {
+		chart[y][x-1] = this
+		if x-1 > 0 {
+			flood(x-1, y, chart)
+		}
+	}
+	if chart[y-1][x] > this {
+		chart[y-1][x] = this
+		if y-1 > 0 {
+			flood(x, y-1, chart)
+		}
+	}
+	if chart[y+1][x] > this {
+		chart[y+1][x] = this
+		if y+1 < len(chart)-1 {
+			flood(x, y+1, chart)
+		}
+	}
+	if chart[y][x+1] > this {
+		chart[y][x+1] = this
+		if x+1 < len(chart[y])-1 {
+			flood(x+1, y, chart)
 		}
 	}
 }
