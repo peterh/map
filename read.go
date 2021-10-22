@@ -70,6 +70,13 @@ func read(fn string) (*MapData, error) {
 }
 
 func (m *MapData) rectangle() {
+	// Trim ignored characters
+	for _, c := range m.Ignore {
+		for i := range m.line {
+			m.line[i] = strings.ReplaceAll(m.line[i], string(c), " ")
+		}
+	}
+
 	// trim leading empty lines
 	for len(m.line) > 0 && len(strings.TrimSpace(m.line[0])) == 0 {
 		m.line = m.line[1:]

@@ -16,6 +16,7 @@ type MapData struct {
 	Light               uint8   // wall at LightAngle angle this (max) amplification
 	LightAngle          int16   // in degrees
 	Output              string  // Output filename (must end in .png)
+	Ignore              string  // Characters to ignore (default 1234567890)
 	line                []string
 	pic                 image.Image
 }
@@ -30,6 +31,7 @@ func (m *MapData) defaults() {
 	m.ShadowWidth = 0.2
 	m.Light = 15
 	m.LightAngle = 10
+	m.Ignore = "1234567890"
 }
 
 type fromType struct {
